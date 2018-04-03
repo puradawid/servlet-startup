@@ -1,6 +1,5 @@
 package io.github.puradawid.aem.startup.terminal;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonParser;
 
 import org.apache.http.HttpResponse;
@@ -19,10 +18,8 @@ import org.apache.http.util.EntityUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Optional;
 import java.util.Map;
-
-import jdk.nashorn.internal.parser.JSONParser;
+import java.util.Optional;
 
 class Communication {
 
