@@ -27,13 +27,13 @@ class Communication {
     private final HttpClient client;
     private final User user;
 
-    public Communication(Instance instance, User user, HttpClient client) {
+     Communication(Instance instance, User user, HttpClient client) {
         this.instance = instance;
         this.client = client;
         this.user = user;
     }
 
-    public boolean established() {
+     boolean established() {
         try {
             Optional<String> response = makeGetRequest("/");
             return response.isPresent();
@@ -42,7 +42,7 @@ class Communication {
         }
     }
 
-    public int pendingPackages() {
+     int pendingPackages() {
         try {
             Optional<String> packages = makeGetRequest("/crx/packmgr/installstatus.jsp");
             return new JsonParser()
@@ -56,7 +56,7 @@ class Communication {
         }
     }
 
-    public void install(ZipPackage zipPackage) {
+     void install(ZipPackage zipPackage) {
         try {
             Map<String, Object> params = new HashMap<>();
             params.put("force", "true");
@@ -121,7 +121,7 @@ class Communication {
         private final int port;
         private final boolean secure;
 
-        public Instance(String host, int port, boolean secure) {
+        Instance(String host, int port, boolean secure) {
             this.host = host;
             this.port = port;
             this.secure = secure;
@@ -136,7 +136,7 @@ class Communication {
         private final String name;
         private final String password;
 
-        public User(String name, String password) {
+         User(String name, String password) {
             this.name = name;
             this.password = password;
         }
