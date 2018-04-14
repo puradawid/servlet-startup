@@ -9,6 +9,8 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
 
 import java.io.IOException;
 
@@ -20,12 +22,16 @@ public class Main {
         .addOption(Option.builder("h").desc("prints this help").longOpt("help").hasArg(false).optionalArg(true).build())
         .addOption(Option.builder("f").hasArgs().longOpt("file").desc("multiple packages to install").build())
         .addOption(Option.builder("H").hasArg().longOpt("host").desc("host name").build())
-        .addOption(Option.builder("p").hasArg().longOpt("port").desc("port number").build());
+        .addOption(Option.builder("p").hasArg().longOpt("port").desc("port number").build())
+        .addOption(Option.builder("debug").desc("Turn on debugging log").build());
 
     private static HelpFormatter helpFormatter = new HelpFormatter();
 
     public static void main(String[] args) throws ParseException, InterruptedException {
         CommandLine commandLine = commandLineParser.parse(options, args);
+        if (commandLine.hasOption("debug")) {
+            LogManager.getLogger("io.github.puradawid.aem").setLevel(Level.DEBUG);
+        }
         if (hasAllNeededParams(commandLine)) {
             helpFormatter.printHelp(
                 "java -jar install.jar",

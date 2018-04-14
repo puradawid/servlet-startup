@@ -3,13 +3,16 @@ package io.github.puradawid.aem.startup.terminal;
 import com.google.gson.JsonParser;
 
 import org.apache.http.client.HttpClient;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 class Communication {
+
+    private static final Logger LOGGER = LogManager.getLogger(Communication.class);
 
     private final ApacheHttpClientFacade httpClientFacade;
 
@@ -18,49 +21,34 @@ class Communication {
     }
 
      boolean established() {
-        try {
-            Optional<String> response = httpClientFacade.makeGetRequest("/");
-            return response.isPresent();
-        } catch (IOException ex) {
-            return false;
-        }
+        Optional<String> response = httpClientFacade.makeGetRequest("/");
+        return response.isPresent();
     }
 
      int pendingPackages() {
-        try {
-            Optional<String> packages = httpClientFacade.makeGetRequest("/crx/packmgr/installstatus.jsp");
-            return new JsonParser()
-                .parse(packages.get())
-                .getAsJsonObject()
-                .getAsJsonObject("status")
-                .getAsJsonPrimitive("itemCount")
-                .getAsInt();
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
+        Optional<String> packages = httpClientFacade.makeGetRequest("/crx/packmgr/installstatus.jsp");
+        LOGGER.debug("Response: " + packages.get());
+        return new JsonParser()
+            .parse(packages.get())
+            .getAsJsonObject()
+            .getAsJsonObject("status")
+            .getAsJsonPrimitive("itemCount")
+            .getAsInt();
     }
 
      void install(ZipPackage zipPackage) {
-        try {
-            Map<String, Object> params = new HashMap<>();
-            params.put("force", "true");
-            params.put("install", "true");
-            if (zipPackage.validate()) {
-                params.put("file", zipPackage.file());
-                params.put("name", zipPackage.name());
-            }
-            httpClientFacade.makePostRequest("/crx/packmgr/service.jsp", params);
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
+        Map<String, Object> params = new HashMap<>();
+        params.put("force", "true");
+        params.put("install", "true");
+        if (zipPackage.validate()) {
+            params.put("file", zipPackage.file());
+            params.put("name", zipPackage.name());
         }
+        httpClientFacade.makePostRequest("/crx/packmgr/service.jsp", params);
     }
 
     boolean startedUp() {
-        try {
-            return httpClientFacade.makeGetRequest("/bin/startup").map(x -> x.equals("Done")).orElse(false);
-        } catch (IOException ex) {
-            return false;
-        }
+        return httpClientFacade.makeGetRequest("/bin/startup").map(x -> x.equals("Done")).orElse(false);
     }
 
     static class Instance {
