@@ -23,7 +23,7 @@ public class Main {
 
     public static void main(String[] args) throws ParseException, InterruptedException {
         CommandLine commandLine = commandLineParser.parse(options, args);
-        if (commandLine.hasOption("h")) {
+        if (hasAllNeededParams(commandLine)) {
             helpFormatter.printHelp(
                 "java -jar install.jar",
                 "Install AEM package and wait for result",
@@ -38,18 +38,18 @@ public class Main {
                 new Communication.User("admin", "admin"), HttpClientBuilder.create().build());
             ZipPackage zipPackage = new ZipPackage(commandLine.getOptionValue("file"));
 
-            if (zipPackage.validate() && connection.established()) {
-                int number = connection.pendingPackages();
-                connection.install(zipPackage);
-
-                while (connection.pendingPackages() > number) {
-                    Thread.sleep(500);
-                }
-
+            InstallationProcess process = new InstallationProcess(zipPackage, connection);
+            if (process.get()) {
+                System.out.println("ZIP is installed");
+                System.exit(0);
             } else {
                 System.out.println("ZIP is not installed");
-                System.exit(1);
+                System.exit(-1);
             }
         }
+    }
+
+    private static boolean hasAllNeededParams(CommandLine cmd) {
+        return cmd.hasOption("h") || (!cmd.hasOption("f") || !cmd.hasOption("H") || !cmd.hasOption("p"));
     }
 }
