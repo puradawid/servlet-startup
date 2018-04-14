@@ -7,7 +7,10 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+
+import java.io.IOException;
 
 public class Main {
 
@@ -33,18 +36,25 @@ public class Main {
             );
         } else {
             // based on arguments
-            Communication connection = new Communication(
-                new Communication.Instance(commandLine.getOptionValue("host"), Integer.parseInt(commandLine.getOptionValue("port")), false),
-                new Communication.User("admin", "admin"), HttpClientBuilder.create().build());
-            ZipPackage zipPackage = new ZipPackage(commandLine.getOptionValue("file"));
+            try (CloseableHttpClient httpClient = HttpClientBuilder.create().build()) {
+                Communication connection = new Communication(
+                    new Communication.Instance(commandLine.getOptionValue("host"),
+                        Integer.parseInt(commandLine.getOptionValue("port")), false),
+                    new Communication.User("admin", "admin"), httpClient);
+                ZipPackage zipPackage = new ZipPackage(commandLine.getOptionValue("file"));
 
-            InstallationProcess process = new InstallationProcess(zipPackage, connection);
-            if (process.get()) {
-                System.out.println("ZIP is installed");
-                System.exit(0);
-            } else {
-                System.out.println("ZIP is not installed");
-                System.exit(-1);
+                InstallationProcess process = new InstallationProcess(zipPackage, connection);
+                if (process.get()) {
+                    System.out.println("ZIP is installed");
+                    System.exit(0);
+                } else {
+                    System.out.println("ZIP is not installed");
+                    System.exit(-1);
+                }
+            } catch (IOException ex) {
+                System.out.println("There is a problem with registering http client. No rights there?");
+                ex.printStackTrace();
+                System.exit(-2);
             }
         }
     }
