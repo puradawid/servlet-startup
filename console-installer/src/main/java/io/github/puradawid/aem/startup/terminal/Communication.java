@@ -27,7 +27,7 @@ class Communication {
 
      int pendingPackages() {
         Optional<String> packages = httpClientFacade.makeGetRequest("/crx/packmgr/installstatus.jsp");
-        LOGGER.debug("Response: " + packages.get());
+        LOGGER.debug("Response of pendingPackages: " + packages.get());
         return new JsonParser()
             .parse(packages.get())
             .getAsJsonObject()

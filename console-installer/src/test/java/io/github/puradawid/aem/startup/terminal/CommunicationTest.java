@@ -78,6 +78,15 @@ public class CommunicationTest {
             new Communication.Instance("mainframe", 4502, false), user, httpClientMock);
 
         assertThat(communication.pendingPackages(), is(1));
+    }
 
+    @Test
+    public void testServletStartup() {
+        HttpClientMock httpClientMock = new HttpClientMock();
+        httpClientMock.onGet("http://mainframe:4502/bin/startup").doReturn("Done").doReturnStatus(200);
+        Communication communication = new Communication(
+            new Communication.Instance("mainframe", 4502, false), user, httpClientMock);
+
+        assertThat(communication.startedUp(), is(true));
     }
 }
