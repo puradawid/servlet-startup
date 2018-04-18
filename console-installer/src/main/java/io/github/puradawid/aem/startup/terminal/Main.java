@@ -11,16 +11,23 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 public class Main {
+
+    private final static Logger LOGGER = LogManager.getLogger(Main.class);
 
     private static CommandLineParser commandLineParser = new DefaultParser();
 
     private static Options options = new Options()
-        .addOption(Option.builder("h").desc("prints this help").longOpt("help").hasArg(false).optionalArg(true).build())
-        .addOption(Option.builder("f").hasArgs().longOpt("file").desc("multiple packages to install").build())
+        .addOption(Option.builder("h").desc("prints this help").longOpt("help").hasArg(false)
+            .optionalArg(true).build())
+        .addOption(
+            Option.builder("f").hasArgs().longOpt("file").desc("multiple packages to install")
+                .build())
         .addOption(Option.builder("H").hasArg().longOpt("host").desc("host name").build())
         .addOption(Option.builder("p").hasArg().longOpt("port").desc("port number").build())
         .addOption(Option.builder("debug").desc("Turn on debugging log").build());
@@ -32,7 +39,12 @@ public class Main {
         if (commandLine.hasOption("debug")) {
             LogManager.getLogger("io.github.puradawid.aem").setLevel(Level.DEBUG);
         }
-        if (hasAllNeededParams(commandLine)) {
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Installer run with arguments: " + printArray(commandLine.getArgs()));
+        }
+
+        if (hasHelpOrInsufficientParams(commandLine)) {
             helpFormatter.printHelp(
                 "java -jar install.jar",
                 "Install AEM package and wait for result",
@@ -58,14 +70,22 @@ public class Main {
                     System.exit(-1);
                 }
             } catch (IOException ex) {
-                System.out.println("There is a problem with registering http client. No rights there?");
+                System.out
+                    .println("There is a problem with registering http client. No rights there?");
                 ex.printStackTrace();
                 System.exit(-2);
             }
         }
     }
 
-    private static boolean hasAllNeededParams(CommandLine cmd) {
-        return cmd.hasOption("h") || (!cmd.hasOption("f") || !cmd.hasOption("H") || !cmd.hasOption("p"));
+    private static boolean hasHelpOrInsufficientParams(CommandLine cmd) {
+        return cmd.hasOption("h") || (!cmd.hasOption("f") || !cmd.hasOption("H") || !cmd
+            .hasOption("p"));
+    }
+
+    private static String printArray(String[] array) {
+        StringBuilder sb = new StringBuilder();
+        Arrays.stream(array).forEach(x -> sb.append(x).append(";"));
+        return sb.toString();
     }
 }

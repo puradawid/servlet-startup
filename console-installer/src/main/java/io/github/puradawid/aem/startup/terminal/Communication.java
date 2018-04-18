@@ -4,36 +4,46 @@ import com.google.gson.JsonParser;
 
 import org.apache.http.client.HttpClient;
 import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import io.github.puradawid.aem.startup.terminal.log.ModernLogFacade;
+
 class Communication {
 
-    private static final Logger LOGGER = LogManager.getLogger(Communication.class);
+    private static final ModernLogFacade LOGGER =
+        new ModernLogFacade(LogManager.getLogger(Communication.class));
 
     private final ApacheHttpClientFacade httpClientFacade;
 
-     Communication(Instance instance, User user, HttpClient client) {
+    Communication(Instance instance, User user, HttpClient client) {
+        LOGGER.debug(() ->
+            String.format(
+                "Creating ApacheHttpClientFacade with params: URL: %s; name: %s, password: %s",
+                instance.translateToUri(),
+                user.name,
+                user.password));
         this.httpClientFacade = new ApacheHttpClientFacade(client, instance.translateToUri(), user.name, user.password);
     }
 
      boolean established() {
-        Optional<String> response = httpClientFacade.makeGetRequest("/");
-        return response.isPresent();
+         LOGGER.debug(() -> "Calling established function");
+         Optional<String> response = httpClientFacade.makeGetRequest("/");
+         LOGGER.debug(() -> "Established: " + response.get());
+         return response.isPresent();
     }
 
      int pendingPackages() {
-        Optional<String> packages = httpClientFacade.makeGetRequest("/crx/packmgr/installstatus.jsp");
-        LOGGER.debug("Response of pendingPackages: " + packages.get());
-        return new JsonParser()
-            .parse(packages.get())
-            .getAsJsonObject()
-            .getAsJsonObject("status")
-            .getAsJsonPrimitive("itemCount")
-            .getAsInt();
+         Optional<String> packages = httpClientFacade.makeGetRequest("/crx/packmgr/installstatus.jsp");
+         LOGGER.debug(() -> "Response of pendingPackages: " + packages.get());
+         return new JsonParser()
+             .parse(packages.get())
+             .getAsJsonObject()
+             .getAsJsonObject("status")
+             .getAsJsonPrimitive("itemCount")
+             .getAsInt();
     }
 
      void install(ZipPackage zipPackage) {

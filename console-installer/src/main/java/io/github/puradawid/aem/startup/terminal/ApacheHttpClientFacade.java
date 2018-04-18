@@ -1,5 +1,6 @@
 package io.github.puradawid.aem.startup.terminal;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -19,9 +20,11 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.Map;
 
+import io.github.puradawid.aem.startup.terminal.log.ModernLogFacade;
+
 class ApacheHttpClientFacade {
 
-    private static final Logger LOGGER = Logger.getLogger(ApacheHttpClientFacade.class);
+    private static final ModernLogFacade LOGGER = new ModernLogFacade(Logger.getLogger(ApacheHttpClientFacade.class));
 
     private final HttpClient client;
     private final String host;
@@ -42,6 +45,7 @@ class ApacheHttpClientFacade {
         HttpResponse response;
         try {
             response = client.execute(get, buildContextBasedOnUser());
+            LOGGER.debug(() -> String.format("GET %s%s", host, path));
         } catch (IOException ex) {
             LOGGER.error("Executing GET request failed", ex);
             return Optional.empty();
@@ -49,7 +53,10 @@ class ApacheHttpClientFacade {
 
         if (response.getStatusLine().getStatusCode() == 200) {
             try {
-                return Optional.ofNullable(EntityUtils.toString(response.getEntity()));
+                Optional<String> result =
+                    Optional.ofNullable(EntityUtils.toString(response.getEntity()));
+                LOGGER.debug(() -> "Response: " + result.orElse(""));
+                return result;
             } catch (IOException ex) {
                 LOGGER.error("Reading response entity failed", ex);
                 return Optional.empty();
@@ -71,18 +78,26 @@ class ApacheHttpClientFacade {
             }
         }
 
+        LOGGER.debug(() -> String.format("POST %s%s", host, path));
         post.setEntity(builder.build());
 
         HttpResponse response;
+        String responseText;
         try {
             response = client.execute(post, buildContextBasedOnUser());
+            HttpEntity entity = response.getEntity();
+            responseText = EntityUtils.toString(entity);
+            EntityUtils.consumeQuietly(entity);
         } catch (IOException ex) {
             LOGGER.error("Executing POST failed", ex);
             return Optional.empty();
         }
 
-        if (response.getStatusLine().getStatusCode() == 200) {
-            return Optional.ofNullable(response.getEntity().toString());
+        int statusCode = response.getStatusLine().getStatusCode();
+        LOGGER.debug(() -> String.format("Response %s with %d code", responseText, statusCode));
+
+        if (statusCode == 200) {
+            return Optional.ofNullable(responseText);
         } else {
             return Optional.empty();
         }
